@@ -82,7 +82,6 @@ body {
 
 <body>
 
-<!-- VIDEO (ŞİMDİLİK LOCAL) -->
 <video id="bgVideo" autoplay muted loop playsinline>
   <source src="background.mp4" type="video/mp4">
 </video>
@@ -90,10 +89,10 @@ body {
 <div id="scoreboard"></div>
 
 <div id="arena">
-  <img id="turkiye" class="flag" src="flags/turkiye.png">
-  <img id="kurdistan" class="flag" src="flags/kurdistan.png">
-  <img id="suriye" class="flag" src="flags/suriye.png">
-  <img id="afganistan" class="flag" src="flags/afganistan.png">
+  <img id="turkiye" class="flag" src="https://res.cloudinary.com/dgw3dbfcs/image/upload/v1777897201/turkiye_hlvora.png">
+  <img id="kurdistan" class="flag" src="https://res.cloudinary.com/dgw3dbfcs/image/upload/v1777897201/kurdistan_beap6j.png">
+  <img id="suriye" class="flag" src="https://res.cloudinary.com/dgw3dbfcs/image/upload/v1777897201/suriye_m6d3no.png">
+  <img id="afganistan" class="flag" src="https://res.cloudinary.com/dgw3dbfcs/image/upload/v1777897201/afganistan_b0sbla.png">
 </div>
 
 <audio id="player"></audio>
@@ -237,7 +236,7 @@ function updateScoreboard(){
   sorted.forEach(([name,data],i)=>{
     html+=`
     <div class="score-box ${i===0?"score-leader":""}">
-      <img src="flags/${name}.png">
+      <img src="${document.getElementById(name).src}">
       <span>${data.score}</span>
     </div>`;
   });
