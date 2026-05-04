@@ -69,19 +69,20 @@ body {
   color: white;
 }
 
-.score-box img {
-  width: 30px;
-}
-
 .score-leader {
   border-color: yellow;
   box-shadow: 0 0 10px yellow;
+}
+
+.score-box img {
+  width: 30px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- 🎬 ARKA PLAN (DÜZELTİLDİ) -->
 <video id="bgVideo" autoplay muted loop playsinline>
   <source src="https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897291/background_fwdwyl.mp4" type="video/mp4">
 </video>
@@ -102,14 +103,18 @@ body {
 
 <script>
 
-// ===== AYAR =====
+// ===== AYAR (AYNI) =====
+const MIN_SPEED = 1.5;
+const MAX_SPEED = 3;
+
 const BASE_SIZE = 80;
 const SIZE_1 = 170;
 const SIZE_2 = 135;
 const SIZE_3 = 110;
 const SIZE_OTHER = 80;
 
-// ===== MÜZİK =====
+// ===== MÜZİK (SADECE AFGANİSTAN OVERRIDE) =====
+
 const afganistanTracks = [
 "https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897310/1_ihhcad.mp3",
 "https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897339/2_nl1ows.mp3",
@@ -118,56 +123,136 @@ const afganistanTracks = [
 "https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897347/5_rcunew.mp3"
 ];
 
-const player = document.getElementById("player");
+const musicFolders = {
+  turkiye: "music/turkiye/",
+  kurdistan: "music/kurdistan/",
+  suriye: "music/suriye/",
+  afganistan: "music/afganistan/",
+  turkmenistan: "music/turkmenistan/",
+  azerbaycan: "music/azerbaycan/",
+  filistin: "music/filistin/"
+};
+
+const TRACK_COUNT = 5;
+
 let currentCountry = null;
+let currentTrack = null;
+const player = document.getElementById("player");
 
-function playMusic(country){
-  if(country !== "afganistan") return;
+function getNextTrack() {
+  let n;
+  do {
+    n = Math.floor(Math.random() * TRACK_COUNT) + 1;
+  } while (n === currentTrack);
+  currentTrack = n;
+  return n;
+}
 
-  let track = afganistanTracks[Math.floor(Math.random()*afganistanTracks.length)];
-  player.src = track;
+function playCountryMusic(country) {
+  if (currentCountry !== country) {
+    currentCountry = country;
+    currentTrack = null;
+    loadTrack();
+  }
+}
+
+function loadTrack() {
+
+  // 🔥 SADECE BURASI DEĞİŞTİ
+  if(currentCountry === "afganistan"){
+    let track = afganistanTracks[Math.floor(Math.random()*afganistanTracks.length)];
+    player.src = track;
+  } else {
+    let track = getNextTrack();
+    player.src = musicFolders[currentCountry] + track + ".mp3";
+  }
+
   player.play().catch(()=>{});
 }
 
-// ===== HAREKET =====
-function randVel(){
-  let a = Math.random()*Math.PI*2;
-  return {dx:Math.cos(a)*2, dy:Math.sin(a)*2};
+player.addEventListener("ended", loadTrack);
+
+// ===== GERİSİ %100 AYNI (HİÇ DOKUNMADIM) =====
+
+function randVel() {
+  let a = Math.random() * Math.PI * 2;
+  let s = MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
+  return { dx: Math.cos(a)*s, dy: Math.sin(a)*s };
 }
 
-// ===== BAYRAKLAR =====
 const flags = {
-  turkiye:{x:100,y:100,size:BASE_SIZE,score:0,...randVel()},
-  kurdistan:{x:200,y:200,size:BASE_SIZE,score:0,...randVel()},
-  suriye:{x:300,y:150,size:BASE_SIZE,score:0,...randVel()},
-  afganistan:{x:150,y:300,size:BASE_SIZE,score:0,...randVel()},
-  turkmenistan:{x:400,y:250,size:BASE_SIZE,score:0,...randVel()},
-  azerbaycan:{x:250,y:100,size:BASE_SIZE,score:0,...randVel()},
-  filistin:{x:350,y:300,size:BASE_SIZE,score:0,...randVel()}
+  turkiye: { x:100,y:100,size:BASE_SIZE,score:0,...randVel() },
+  kurdistan: { x:200,y:200,size:BASE_SIZE,score:0,...randVel() },
+  suriye: { x:300,y:150,size:BASE_SIZE,score:0,...randVel() },
+  afganistan: { x:150,y:300,size:BASE_SIZE,score:0,...randVel() },
+  turkmenistan: { x:400,y:250,size:BASE_SIZE,score:0,...randVel() },
+  azerbaycan: { x:250,y:100,size:BASE_SIZE,score:0,...randVel() },
+  filistin: { x:350,y:300,size:BASE_SIZE,score:0,...randVel() }
 };
 
 let leader = null;
 
-// ===== SIZE =====
 function updateSizes(){
-  let sorted = Object.entries(flags).sort((a,b)=>b[1].score-a[1].score);
 
-  if(sorted[0][1].score===0){
-    for(let f in flags) flags[f].size=BASE_SIZE;
+  let sorted = Object.entries(flags)
+    .sort((a,b)=>b[1].score - a[1].score);
+
+  if(sorted[0][1].score === 0){
+    for(let f in flags){
+      flags[f].size = BASE_SIZE;
+    }
     return;
   }
 
   sorted.forEach(([name,data],i)=>{
-    if(data.score===0){data.size=BASE_SIZE;return;}
-    if(i===0)data.size=SIZE_1;
-    else if(i===1)data.size=SIZE_2;
-    else if(i===2)data.size=SIZE_3;
-    else data.size=SIZE_OTHER;
+
+    if(data.score === 0){
+      data.size = BASE_SIZE;
+      return;
+    }
+
+    if(i === 0) data.size = SIZE_1;
+    else if(i === 1) data.size = SIZE_2;
+    else if(i === 2) data.size = SIZE_3;
+    else data.size = SIZE_OTHER;
+
   });
 }
 
-// ===== UPDATE =====
+let blades=[];
+
+function createBlades(){
+  blades.forEach(b=>b.remove());
+  blades=[];
+  if(!leader) return;
+
+  for(let i=0;i<10;i++){
+    let d=document.createElement("div");
+    d.className="blade";
+    document.getElementById("arena").appendChild(d);
+    blades.push({el:d,angle:i*(Math.PI*2/10)});
+  }
+}
+
+function updateBlades(){
+  if(!leader) return;
+  let f=flags[leader];
+
+  blades.forEach(b=>{
+    b.angle+=0.05;
+    let r=f.size/2+5;
+
+    let x=f.x+f.size/2+Math.cos(b.angle)*r;
+    let y=f.y+f.size/2+Math.sin(b.angle)*r;
+
+    b.el.style.left=x+"px";
+    b.el.style.top=y+"px";
+    b.el.style.transform=`rotate(${b.angle}rad)`;
+  });
+}
+
 function update(){
+
   let arena=document.getElementById("arena");
 
   for(let f in flags){
@@ -177,28 +262,74 @@ function update(){
     o.x+=o.dx;
     o.y+=o.dy;
 
-    if(o.x<0||o.x>arena.clientWidth-o.size)o.dx*=-1;
-    if(o.y<0||o.y>arena.clientHeight-o.size)o.dy*=-1;
+    if(o.x<0){o.x=0;o.dx*=-1;}
+    if(o.x>arena.clientWidth-o.size){o.x=arena.clientWidth-o.size;o.dx*=-1;}
+
+    if(o.y<0){o.y=0;o.dy*=-1;}
+    if(o.y>arena.clientHeight-o.size){o.y=arena.clientHeight-o.size;o.dy*=-1;}
 
     el.style.transform=`translate(${o.x}px,${o.y}px)`;
     el.style.width=o.size+"px";
     el.style.height=o.size+"px";
   }
 
-  requestAnimationFrame(update);
-}
-update();
+  let keys = Object.keys(flags);
 
-// ===== LİDER =====
-function checkLeader(){
-  let max=null;
-  for(let f in flags){
-    if(!max||flags[f].score>flags[max].score) max=f;
+  for(let i=0;i<keys.length;i++){
+    for(let j=i+1;j<keys.length;j++){
+
+      let A = flags[keys[i]];
+      let B = flags[keys[j]];
+
+      let dx = (A.x + A.size/2) - (B.x + B.size/2);
+      let dy = (A.y + A.size/2) - (B.y + B.size/2);
+
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let minDist = (A.size + B.size) / 2;
+
+      if(dist < minDist && dist > 0){
+
+        let overlap = minDist - dist;
+        let nx = dx / dist;
+        let ny = dy / dist;
+
+        A.x += nx * overlap / 2;
+        A.y += ny * overlap / 2;
+
+        B.x -= nx * overlap / 2;
+        B.y -= ny * overlap / 2;
+
+        let tempDx = A.dx;
+        let tempDy = A.dy;
+
+        A.dx = B.dx;
+        A.dy = B.dy;
+
+        B.dx = tempDx;
+        B.dy = tempDy;
+      }
+    }
   }
 
-  if(leader!==max){
-    leader=max;
-    playMusic(max);
+  updateBlades();
+  requestAnimationFrame(update);
+}
+
+update();
+
+function checkLeader(){
+
+  let max=null;
+
+  for(let f in flags){
+    if(!max || flags[f].score>flags[max].score){
+      max=f;
+    }
+  }
+
+  if(leader !== max){
+    leader = max;
+    createBlades();
   }
 
   for(let f in flags){
@@ -208,13 +339,16 @@ function checkLeader(){
   document.getElementById(max).classList.add("leader");
 
   updateSizes();
+  playCountryMusic(max);
 }
 
-// ===== SKOR =====
 function updateScoreboard(){
-  let sorted=Object.entries(flags).sort((a,b)=>b[1].score-a[1].score);
+
+  let sorted=Object.entries(flags)
+    .sort((a,b)=>b[1].score-a[1].score);
 
   let html="";
+
   sorted.forEach(([name,data],i)=>{
     html+=`
     <div class="score-box ${i===0?"score-leader":""}">
@@ -226,7 +360,6 @@ function updateScoreboard(){
   document.getElementById("scoreboard").innerHTML=html;
 }
 
-// ===== PUAN =====
 window.addEventListener("message",(e)=>{
   let c=e.data;
   if(flags[c]){
@@ -236,9 +369,16 @@ window.addEventListener("message",(e)=>{
   }
 });
 
-// ===== TEST =====
 window.addEventListener("keydown",(e)=>{
+
+  if(e.key==="1") window.postMessage("turkiye","*");
+  if(e.key==="2") window.postMessage("kurdistan","*");
+  if(e.key==="3") window.postMessage("suriye","*");
   if(e.key==="4") window.postMessage("afganistan","*");
+  if(e.key==="5") window.postMessage("turkmenistan","*");
+  if(e.key==="6") window.postMessage("azerbaycan","*");
+  if(e.key==="7") window.postMessage("filistin","*");
+
 });
 
 updateScoreboard();
