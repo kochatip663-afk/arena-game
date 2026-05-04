@@ -12,7 +12,6 @@ body {
   background: black;
 }
 
-/* 🎬 VIDEO */
 #bgVideo {
   position: fixed;
   top: 50%;
@@ -24,7 +23,6 @@ body {
   z-index: -1;
 }
 
-/* ARENA */
 #arena {
   position: absolute;
   width: 800px;
@@ -38,7 +36,6 @@ body {
   overflow: hidden;
 }
 
-/* BAYRAK */
 .flag {
   position: absolute;
   width: 80px;
@@ -52,7 +49,6 @@ body {
   box-shadow: 0 0 20px yellow;
 }
 
-/* SKOR */
 #scoreboard {
   position: absolute;
   top: 15px;
@@ -73,20 +69,19 @@ body {
   color: white;
 }
 
+.score-box img {
+  width: 30px;
+}
+
 .score-leader {
   border-color: yellow;
   box-shadow: 0 0 10px yellow;
-}
-
-.score-box img {
-  width: 30px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🎬 ARKA PLAN -->
 <video id="bgVideo" autoplay muted loop playsinline>
   <source src="https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897291/background_fwdwyl.mp4" type="video/mp4">
 </video>
@@ -107,8 +102,14 @@ body {
 
 <script>
 
-// ================= MÜZİK =================
+// ===== AYAR =====
+const BASE_SIZE = 80;
+const SIZE_1 = 170;
+const SIZE_2 = 135;
+const SIZE_3 = 110;
+const SIZE_OTHER = 80;
 
+// ===== MÜZİK =====
 const afganistanTracks = [
 "https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897310/1_ihhcad.mp3",
 "https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897339/2_nl1ows.mp3",
@@ -117,28 +118,130 @@ const afganistanTracks = [
 "https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897347/5_rcunew.mp3"
 ];
 
-let currentCountry = null;
 const player = document.getElementById("player");
+let currentCountry = null;
 
 function playMusic(country){
-
   if(country !== "afganistan") return;
 
-  let list = afganistanTracks;
-  let track = list[Math.floor(Math.random()*list.length)];
-
+  let track = afganistanTracks[Math.floor(Math.random()*afganistanTracks.length)];
   player.src = track;
   player.play().catch(()=>{});
 }
 
-// ================= BASİT TEST =================
+// ===== HAREKET =====
+function randVel(){
+  let a = Math.random()*Math.PI*2;
+  return {dx:Math.cos(a)*2, dy:Math.sin(a)*2};
+}
 
-// geçici: 4 tuşu → Afganistan müzik test
-window.addEventListener("keydown",(e)=>{
-  if(e.key==="4"){
-    playMusic("afganistan");
+// ===== BAYRAKLAR =====
+const flags = {
+  turkiye:{x:100,y:100,size:BASE_SIZE,score:0,...randVel()},
+  kurdistan:{x:200,y:200,size:BASE_SIZE,score:0,...randVel()},
+  suriye:{x:300,y:150,size:BASE_SIZE,score:0,...randVel()},
+  afganistan:{x:150,y:300,size:BASE_SIZE,score:0,...randVel()},
+  turkmenistan:{x:400,y:250,size:BASE_SIZE,score:0,...randVel()},
+  azerbaycan:{x:250,y:100,size:BASE_SIZE,score:0,...randVel()},
+  filistin:{x:350,y:300,size:BASE_SIZE,score:0,...randVel()}
+};
+
+let leader = null;
+
+// ===== SIZE =====
+function updateSizes(){
+  let sorted = Object.entries(flags).sort((a,b)=>b[1].score-a[1].score);
+
+  if(sorted[0][1].score===0){
+    for(let f in flags) flags[f].size=BASE_SIZE;
+    return;
+  }
+
+  sorted.forEach(([name,data],i)=>{
+    if(data.score===0){data.size=BASE_SIZE;return;}
+    if(i===0)data.size=SIZE_1;
+    else if(i===1)data.size=SIZE_2;
+    else if(i===2)data.size=SIZE_3;
+    else data.size=SIZE_OTHER;
+  });
+}
+
+// ===== UPDATE =====
+function update(){
+  let arena=document.getElementById("arena");
+
+  for(let f in flags){
+    let o=flags[f];
+    let el=document.getElementById(f);
+
+    o.x+=o.dx;
+    o.y+=o.dy;
+
+    if(o.x<0||o.x>arena.clientWidth-o.size)o.dx*=-1;
+    if(o.y<0||o.y>arena.clientHeight-o.size)o.dy*=-1;
+
+    el.style.transform=`translate(${o.x}px,${o.y}px)`;
+    el.style.width=o.size+"px";
+    el.style.height=o.size+"px";
+  }
+
+  requestAnimationFrame(update);
+}
+update();
+
+// ===== LİDER =====
+function checkLeader(){
+  let max=null;
+  for(let f in flags){
+    if(!max||flags[f].score>flags[max].score) max=f;
+  }
+
+  if(leader!==max){
+    leader=max;
+    playMusic(max);
+  }
+
+  for(let f in flags){
+    document.getElementById(f).classList.remove("leader");
+  }
+
+  document.getElementById(max).classList.add("leader");
+
+  updateSizes();
+}
+
+// ===== SKOR =====
+function updateScoreboard(){
+  let sorted=Object.entries(flags).sort((a,b)=>b[1].score-a[1].score);
+
+  let html="";
+  sorted.forEach(([name,data],i)=>{
+    html+=`
+    <div class="score-box ${i===0?"score-leader":""}">
+      <img src="flags/${name}.png">
+      <span>${data.score}</span>
+    </div>`;
+  });
+
+  document.getElementById("scoreboard").innerHTML=html;
+}
+
+// ===== PUAN =====
+window.addEventListener("message",(e)=>{
+  let c=e.data;
+  if(flags[c]){
+    flags[c].score++;
+    checkLeader();
+    updateScoreboard();
   }
 });
+
+// ===== TEST =====
+window.addEventListener("keydown",(e)=>{
+  if(e.key==="4") window.postMessage("afganistan","*");
+});
+
+updateScoreboard();
 
 </script>
 
