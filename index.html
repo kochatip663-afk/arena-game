@@ -99,6 +99,15 @@ body {
 
 <script>
 
+// ===== AFGANİSTAN MÜZİKLERİ =====
+const afganistanTracks = [
+"https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897310/1_ihhcad.mp3",
+"https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897339/2_nl1ows.mp3",
+"https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897341/3_xboptv.mp3",
+"https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897346/4_ebp7wj.mp3",
+"https://res.cloudinary.com/dgw3dbfcs/video/upload/v1777897347/5_rcunew.mp3"
+];
+
 const MIN_SPEED = 1.5;
 const MAX_SPEED = 3;
 
@@ -139,12 +148,22 @@ function playCountryMusic(country) {
 }
 
 function loadTrack() {
-  let track = getNextTrack();
-  player.src = musicFolders[currentCountry] + track + ".mp3";
+
+  // 🔥 SADECE BURASI DEĞİŞTİ
+  if(currentCountry === "afganistan"){
+    let track = afganistanTracks[Math.floor(Math.random()*afganistanTracks.length)];
+    player.src = track;
+  } else {
+    let track = getNextTrack();
+    player.src = musicFolders[currentCountry] + track + ".mp3";
+  }
+
   player.play().catch(()=>{});
 }
 
 player.addEventListener("ended", loadTrack);
+
+// ===== GERİSİ AYNI =====
 
 function randVel() {
   let a = Math.random() * Math.PI * 2;
